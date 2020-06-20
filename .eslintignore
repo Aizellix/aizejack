@@ -1,0 +1,13 @@
+build
+scripts
+config
+client/static/*
+coverage
+package*.json
+*.lock
+workflow
+node_modules/*
+storybook-static/*
+.scannerwork/*
+.next/*
+TechnicalDocs
