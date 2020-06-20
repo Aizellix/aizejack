@@ -13,7 +13,7 @@ class MyApp extends App {
   }
 
   render() {
-    const { pageProps } = this.props;
+    const { Component, pageProps } = this.props;
     return (
       <>
         <NextNProgress />

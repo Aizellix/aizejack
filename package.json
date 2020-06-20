@@ -31,6 +31,8 @@
     "firebase": "^7.15.3",
     "fs": "0.0.1-security",
     "next": "9.4.4",
+    "next-compose-plugins": "^2.2.0",
+    "next-routes": "^1.4.2",
     "nprogress": "^0.2.0",
     "prop-types": "^15.7.2",
     "react": "16.13.1",
@@ -41,6 +43,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",
+    "@zeit/next-sass": "^1.0.1",
     "@typescript-eslint/eslint-plugin": "^3.3.0",
     "@typescript-eslint/parser": "^3.3.0",
     "babel-core": "^6.26.3",
@@ -54,9 +57,7 @@
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-react": "^7.20.0",
     "husky": "^4.2.3",
-    "prettier": "2.0.5",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
+    "prettier": "2.0.5"
   },
   "_moduleAliases": {
     "@root": "./server/src",
