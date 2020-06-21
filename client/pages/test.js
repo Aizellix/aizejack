@@ -1,6 +1,7 @@
 import React, { PureComponent } from 'react';
+import { getCard } from '@utility/api';
 
-class Test extends PureComponent {
+class Index extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
@@ -8,13 +9,21 @@ class Test extends PureComponent {
     };
   }
 
+  static async getInitialProps() {
+    const userId = 'th';
+    const response = await getCard(userId);
+
+    console.log('*--- response', response);
+    return { userId };
+  }
+
   render() {
     return (
       <>
-        <h1>Test 2</h1>
+        <h1>Test</h1>
       </>
     );
   }
 }
 
-export default Test;
+export default Index;

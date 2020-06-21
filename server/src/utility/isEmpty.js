@@ -10,4 +10,4 @@ const isEmpty = obj => {
   return false;
 };
 
-export { isEmpty };
+export default isEmpty;

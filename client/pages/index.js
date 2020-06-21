@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { getInitialData } from '@utility/api';
 
 class Index extends PureComponent {
   constructor(props) {
@@ -6,6 +7,14 @@ class Index extends PureComponent {
     this.state = {
       adsValueSetting: null
     };
+  }
+
+  static async getInitialProps() {
+    const userId = 'th';
+    const response = await getInitialData(userId);
+
+    console.log('*--- response', response);
+    return { userId };
   }
 
   render() {
