@@ -32,8 +32,6 @@ const callCard = async ({ body }, res) => {
   };
   const { userId, bets } = body;
   try {
-    console.log('*--- userId', userId);
-    console.log('*--- bets', bets);
     const { success, code, result } = await model.callNewRound({ userId, bets });
     if (success) {
       response = {
@@ -56,7 +54,6 @@ const hitCard = async ({ body }, res) => {
   };
   const { userId } = body;
   try {
-    console.log('*--- userId', userId);
     const { success, code, result } = await model.callHitCard({ userId });
     if (success) {
       response = {
@@ -79,9 +76,7 @@ const standCard = async ({ body }, res) => {
   };
   const { userId, bets } = body;
   try {
-    console.log('*--- userId', userId);
-    console.log('*--- bets', bets);
-    const { success, code, result } = await model.callHitCard({ userId, bets });
+    const { success, code, result } = await model.standCard({ userId, bets });
     if (success) {
       response = {
         success,
@@ -96,15 +91,23 @@ const standCard = async ({ body }, res) => {
 };
 
 const scoreTable = async (req, res) => {
+  let response = {
+    success: false,
+    code: 400,
+    data: {}
+  };
   try {
-    const { status, result } = await model.getScoreTable();
-    const response = {
-      status,
-      data: !isEmpty(result) ? result : {}
-    };
-    return res.status(response.status).json(response);
+    const { success, code, result } = await model.getScoreTable();
+    if (success) {
+      response = {
+        success,
+        code,
+        data: !isEmpty(result) ? result : {}
+      };
+    }
+    return res.status(response.code).json(response);
   } catch (error) {
-    return res.status(400).json(error);
+    return res.status(response.code).json(response);
   }
 };
 

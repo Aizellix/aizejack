@@ -9,6 +9,7 @@ module.exports = {
     DMPENV: process.env.DMPENV,
     ISDEVMODE: process.env.ISDEVMODE,
     baseUrl: process.env.BASE_URL,
+    title: process.env.TITLE_PROJECT,
     baseApiUrl: `${process.env.BASE_URL}${process.env.PROXY_PATH}`,
     baseAuth: {
       username: process.env.AUTH_USER,

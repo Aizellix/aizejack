@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const User = require('./user');
 
 const scoreSchema = mongoose.Schema(
   {
@@ -7,7 +10,8 @@ const scoreSchema = mongoose.Schema(
     },
     point: {
       type: Number
-    }
+    },
+    user: { type: Schema.Types.ObjectId, ref: User }
   },
   {
     collection: 'score'

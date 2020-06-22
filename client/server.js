@@ -11,12 +11,13 @@ const mongoose = require('mongoose');
 
 const mongo_uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0-qhkdj.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
 mongoose.Promise = global.Promise;
+mongoose.set('useFindAndModify', false);
 mongoose.connect(mongo_uri, { useNewUrlParser: true }).then(
   () => {
-    console.log('[success] task 2 : connected to the database ');
+    console.log('[success] : connected to the database ');
   },
   error => {
-    console.log('[failed] task 2 ' + error);
+    console.log('[failed] ' + error);
     process.exit();
   }
 );

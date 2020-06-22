@@ -1,4 +1,3 @@
-// import isEmpty from '../../utility/isEmpty';
 import { getNewDeck } from '../../utility/getNewDeck';
 const User = require('../../emun/user');
 const Score = require('../../emun/score');
@@ -16,12 +15,13 @@ const getInitialGame = async params => {
     const deck = getNewDeck();
     const coins = 1000;
     const { _id: userId, name: userName, createdTime } = await User.create({ name, coins, deck });
-    await Score.create({ userId, point: 0, deck });
+
+    const { _id } = await Score.create({ userId, point: 0, user: userId });
 
     response = {
       success: true,
       code: 200,
-      result: { userName, userId, coins, createdTime }
+      result: { userName, userId, coins, score: 0, createdTime, _id }
     };
     return response;
   } catch (error) {
@@ -50,14 +50,13 @@ const callNewRound = async params => {
     const cards = getCardInfo(cardList);
     const playerCards = [cards[0], cards[1]];
     const dealerCards = [cards[2], cards[3]];
-    console.log('*--- cards', cards);
-    console.log('*--- playerCards', playerCards);
-    console.log('*--- dealerCards', dealerCards);
-    await User.findByIdAndUpdate(userId, { deck: newDeck, coins, dealerCards });
+
+    const { point: playerPoint } = calCardPoint(playerCards);
+    await User.findByIdAndUpdate(userId, { deck: newDeck, coins, dealerCards, playerCards });
     response = {
       success: true,
       code: 200,
-      result: { coins, playerCards, dealerCards: [dealerCards[1]], totalCard: newDeck.length }
+      result: { coins, playerPoint, playerCards, dealerCards: [dealerCards[1]], totalCard: newDeck.length }
     };
     return response;
   } catch (error) {
@@ -75,64 +74,80 @@ const callHitCard = async params => {
     result: {}
   };
   try {
-    let { deck } = await User.findById(userId);
+    let { deck, playerCards } = await User.findById(userId);
 
     const { cards: cardList, deck: newDeck } = drawCardFromDeck(deck, 1);
     const cards = getCardInfo(cardList);
-    await User.findByIdAndUpdate(userId, { deck: newDeck });
+    playerCards = playerCards.concat(cards);
+    await User.findByIdAndUpdate(userId, { deck: newDeck, playerCards });
+    const { point: playerPoint } = calCardPoint(playerCards);
     response = {
       success: true,
       code: 200,
-      result: { cards, totalCard: newDeck.length }
+      result: { cards, playerPoint, playerCards, totalCard: newDeck.length }
     };
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log('callNewRound error : ', error);
+    console.log('callHitCard error : ', error);
     return response;
   }
 };
 
 const standCard = async params => {
-  const { userId } = params;
+  const { userId, bets } = params;
   let response = {
     success: false,
     code: 400,
     result: {}
   };
   try {
-    let { deck } = await User.findById(userId);
+    let { deck, coins, dealerCards, playerCards } = await User.findById(userId);
+    const { winner, dealerPoint, playerPoint, currentDeck, isBlackjack, dealerCards: allDealerCards } = dealerTurn(deck, dealerCards, playerCards);
+    let { point: userScore } = await Score.findOne({ userId });
+    if (winner === 'player') {
+      coins += bets * 2;
+      userScore += bets;
+      await Score.findOneAndUpdate({ userId }, { point: userScore });
+    } else if (winner === 'push') {
+      coins += bets;
+    }
 
-    const { cards: cardList, deck: newDeck } = drawCardFromDeck(deck, 1);
-    const cards = getCardInfo(cardList);
-    await User.findByIdAndUpdate(userId, { deck: newDeck });
+    await User.findByIdAndUpdate(userId, { coins, deck: currentDeck, dealerCards: [], playerCards: [] });
     response = {
       success: true,
       code: 200,
-      result: { cards, totalCard: newDeck.length }
+      result: { winner, coins, score: userScore, dealerPoint, playerPoint, isBlackjack, dealerCards: allDealerCards }
     };
     return response;
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.log('callNewRound error : ', error);
+    console.log('standCard error : ', error);
     return response;
   }
 };
-const getScoreTable = async params => {
-  const { name } = params;
+
+const getScoreTable = async () => {
   let response = {
     success: false,
     code: 400,
     result: {}
   };
   try {
-    const { _id: userId, name: userName, createdTime } = await User.create({ name });
-    await Score.create({ userId, point: 0 });
-
+    const query = await Score.find().sort({ point: -1 }).limit(10).populate('user', 'name createdTime');
+    let result = [];
+    for (let i = 0; i < query.length; i++) {
+      const data = {
+        point: query[i].point,
+        name: query[i].user.name,
+        createdTime: query[i].user.createdTime
+      };
+      result.push(data);
+    }
     response = {
       success: true,
       code: 200,
-      result: { userName, userId, coins: 1000, createdTime }
+      result
     };
     return response;
   } catch (error) {
@@ -164,6 +179,89 @@ const getCardInfo = cardList => {
     cards.push(card);
   }
   return cards;
+};
+
+const dealerTurn = (deck, dealerCards, playerCards) => {
+  let currentDeck = deck;
+  let isEndRound = false;
+  let isBlackjack = false;
+  let winner = '';
+
+  let { point: dealerPoint, isBlackjack: dealerIsBlackjack } = calCardPoint(dealerCards);
+  let { point: playerPoint, isBlackjack: playerIsBlackjack } = calCardPoint(playerCards);
+
+  if (playerPoint === 21 && playerIsBlackjack) {
+    isEndRound = true;
+    isBlackjack = true;
+    winner = 'player';
+  } else if (dealerPoint === 21 && dealerIsBlackjack) {
+    isEndRound = true;
+    isBlackjack = true;
+    winner = 'dealer';
+  } else if (playerPoint === 21 && dealerPoint === 21) {
+    isEndRound = true;
+    winner = 'push';
+  } else if (playerPoint === 21) {
+    isEndRound = true;
+    winner = 'player';
+  } else if (playerPoint > 21) {
+    isEndRound = true;
+    winner = 'dealer';
+  }
+
+  if (!isEndRound) {
+    while (dealerPoint < playerPoint) {
+      const { cards: cardList, deck: newDeck } = drawCardFromDeck(currentDeck, 1);
+      currentDeck = newDeck;
+      const cards = getCardInfo(cardList);
+      dealerCards = dealerCards.concat(cards);
+      ({ point: dealerPoint } = calCardPoint(dealerCards));
+    }
+    if (dealerPoint === 21) {
+      isEndRound = true;
+      winner = 'dealer';
+    } else if (dealerPoint > 21) {
+      isEndRound = true;
+      winner = 'player';
+    } else if (dealerPoint === playerPoint) {
+      isEndRound = true;
+      winner = 'push';
+    } else if (dealerPoint > playerPoint) {
+      isEndRound = true;
+      winner = 'dealer';
+    } else if (dealerPoint > playerPoint) {
+      isEndRound = true;
+      winner = 'dealer';
+    }
+  }
+  return { winner, isBlackjack, dealerPoint, playerPoint, currentDeck, dealerCards };
+};
+
+const calCardPoint = cardList => {
+  let A_card = 0;
+  let point = 0;
+  let isBlackjack = false;
+  for (let i = 0; i < cardList.length; i++) {
+    const card = cardList[i];
+    if (card.name !== 'A') {
+      point += card.point;
+    } else {
+      A_card++;
+    }
+  }
+  for (let i = 0; i < A_card; i++) {
+    if (point + 11 > 21) {
+      point += 1;
+    } else {
+      point += 11;
+    }
+  }
+
+  if (cardList.length === 2 && point === 21) {
+    isBlackjack = true;
+  }
+
+  return { point, isBlackjack };
 };
 
 export default { getInitialGame, callNewRound, callHitCard, standCard, getScoreTable };

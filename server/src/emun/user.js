@@ -14,6 +14,10 @@ const userSchema = mongoose.Schema(
       type: Array,
       default: []
     },
+    playerCards: {
+      type: Array,
+      default: []
+    },
     deck: {
       type: Array,
       default: Array.from(Array(104).keys())
