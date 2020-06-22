@@ -7,8 +7,10 @@
         "root": ["./"],
         "alias": {
           "@components": "./components",
+          "@styles": "./components/styles",
           "@utility": "./utility",
-          "@routes": "./routes"
+          "@routes": "./routes",
+          "@reduxStore": "./modules/reduxStore"
         },
         "cwd": "babelrc"
       }

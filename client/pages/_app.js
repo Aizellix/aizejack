@@ -1,6 +1,9 @@
 import App from 'next/app';
 import React from 'react';
-import NextNProgress from '@components/layouts/NextNProgress';
+import { Provider } from 'react-redux';
+import configureStore from '@reduxStore/configureStore';
+
+const store = configureStore();
 
 class MyApp extends App {
   static async getInitialProps({ Component, ctx }) {
@@ -15,10 +18,9 @@ class MyApp extends App {
   render() {
     const { Component, pageProps } = this.props;
     return (
-      <>
-        <NextNProgress />
+      <Provider store={store}>
         <Component {...pageProps} />
-      </>
+      </Provider>
     );
   }
 }
